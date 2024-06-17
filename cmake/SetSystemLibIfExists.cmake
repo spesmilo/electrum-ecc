@@ -1,0 +1,7 @@
+function (SetSystemLibIfExists)
+    set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH};$ENV{CONDA_PREFIX}/Library/lib/pkgconfig;$ENV{CONDA_PREFIX}/lib/pkgconfig")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        set(PKG_CONFIG_EXECUTABLE "${PKG_CONFIG_EXECUTABLE};--msvc-syntax;--dont-define-prefix")
+    endif()
+    pkg_check_modules(VENDORED_AS_SYSTEM_LIB IMPORTED_TARGET GLOBAL ${VENDORED_LIBRARY_PKG_CONFIG}>=${VENDORED_LIBRARY_PKG_CONFIG_VERSION})
+endfunction()

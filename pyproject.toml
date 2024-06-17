@@ -2,6 +2,7 @@
 build-backend = "hatchling.build"
 requires = [
     "hatchling>=1.24.2",
+    "scikit-build-core>=0.9.0",
     "pypkgconf; sys_platform == 'win32'",
 ]
 
@@ -45,3 +46,42 @@ Repository = "https://github.com/spesmilo/electrum-ecc"
 [tool.hatch.version]
 path = "src/electrum_ecc/__init__.py"
 
+[tool.hatch.build.targets.wheel.hooks.scikit-build]
+experimental = true
+build.verbose = true
+cmake.build-type = "Release"
+cmake.source-dir = "."
+wheel.py-api = ""
+wheel.packages = []
+
+# --- scikit-build-core ---
+[tool.scikit-build.cmake.define]
+CMAKE_BUILD_TYPE = "Release"
+# Coincurve build options - This may be better extracted from the ENV by the CMake directly?
+PROJECT_IGNORE_SYSTEM_LIB = { env = "ELECTRUM_IGNORE_SYSTEM_LIB", default = "ON" }
+PROJECT_CROSS_COMPILE_TARGET = { env = "ELECTRUM_CROSS_HOST", default = "" }
+# Vendored library: SECP256K1
+VENDORED_LIBRARY_CMAKE_TARGET = "secp256k1"
+VENDORED_LIBRARY_PKG_CONFIG = "libsecp256k1"
+VENDORED_LIBRARY_PKG_CONFIG_VERSION = "0.5.0"
+VENDORED_UPSTREAM_URL = "https://github.com/bitcoin-core/secp256k1/archive/"
+VENDORED_UPSTREAM_REF = { env = "ELECTRUM_UPSTREAM_REF", default = "e3a885d42a7800c1ccebad94ad1e2b82c4df5c65" }
+VENDORED_UPSTREAM_SHA = { env = "ELECTRUM_UPSTREAM_SHA", default = "183b9f0417beea4d9c826ca324b5a464faca7446ef39a13a6abbe602df8d934b" }
+# SECP256K1 library specific build options
+# `VENDORED_OPTION` is reserved prefix for vendored library build options
+VENDORED_LIBRARY_OPTION_PREFIX = "SECP256K1"
+#VENDORED_OPTION_DISABLE_SHARED = { env = "ELECTRUM_SECP256K1_STATIC", default = "ON" }
+VENDORED_OPTION_BUILD_BENCHMARK = "OFF"
+VENDORED_OPTION_BUILD_TESTS = "OFF"
+VENDORED_OPTION_BUILD_CTIME_TESTS = "OFF"
+VENDORED_OPTION_BUILD_EXHAUSTIVE_TESTS = "OFF"
+VENDORED_OPTION_BUILD_EXAMPLES = "OFF"
+VENDORED_OPTION_ENABLE_MODULE_ECDH = "ON"
+VENDORED_OPTION_ENABLE_MODULE_RECOVERY = "ON"
+VENDORED_OPTION_ENABLE_MODULE_SCHNORRSIG = "ON"
+VENDORED_OPTION_ENABLE_MODULE_EXTRAKEYS = "ON"
+VENDORED_OPTION_EXPERIMENTAL = "ON"
+# Vendored library build options (cmake, compiler, linker, etc.)
+# VENDORED_CMAKE is reserved prefix for vendored library cmake options
+# VENDORED_CMAKE_<STATIC|SHARED>_<CMAKE_OPTION> = <VALUE>
+VENDORED_LIBRARY_STATIC_BUILD = { env = "ELECTRUM_SECP256K1_STATIC", default = "ON" }
