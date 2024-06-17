@@ -1,0 +1,47 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = [
+    "hatchling>=1.24.2",
+    "pypkgconf; sys_platform == 'win32'",
+]
+
+[project]
+name = "electrum-ecc"
+authors = [
+    { name = "The Electrum developers" },
+]
+description = "Cross-platform Python libsecp256k1"
+keywords = ["libsecp256k1", "ecc"]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+dependencies = []
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Security :: Cryptography",
+]
+dynamic = ["version"]
+
+
+[project.urls]
+Homepage = "https://github.com/spesmilo/electrum-ecc"
+Repository = "https://github.com/spesmilo/electrum-ecc"
+
+# --- hatch ---
+[tool.hatch.version]
+path = "src/electrum_ecc/__init__.py"
+
