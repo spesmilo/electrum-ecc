@@ -11,7 +11,7 @@ import sys
 import logging
 import ctypes
 from ctypes import (
-    byref, c_byte, c_int, c_uint, c_char_p, c_size_t, c_void_p, create_string_buffer,
+    byref, c_byte, c_int, c_uint, c_char, c_char_p, c_size_t, c_void_p, create_string_buffer,
     CFUNCTYPE, POINTER, cast
 )
 
@@ -36,6 +36,13 @@ SECP256K1_CONTEXT_NONE = (SECP256K1_FLAGS_TYPE_CONTEXT)
 SECP256K1_EC_COMPRESSED = (SECP256K1_FLAGS_TYPE_COMPRESSION | SECP256K1_FLAGS_BIT_COMPRESSION)
 SECP256K1_EC_UNCOMPRESSED = (SECP256K1_FLAGS_TYPE_COMPRESSION)
 
+HASHFN = CFUNCTYPE(c_int, POINTER(c_char), c_char_p, c_char_p)
+
+def copy_x(output, x32, y32):
+    ctypes.memmove(output, x32, 32)
+    return 1
+
+HASHFN_COPY_X = HASHFN(copy_x)
 
 class LibModuleMissing(Exception): pass
 
@@ -91,6 +98,9 @@ def load_library():
 
         secp256k1.secp256k1_ecdsa_sign.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p, c_void_p, c_void_p]
         secp256k1.secp256k1_ecdsa_sign.restype = c_int
+
+        secp256k1.secp256k1_ecdh.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p, HASHFN, c_void_p]
+        secp256k1.secp256k1_ecdh.restype = c_int
 
         secp256k1.secp256k1_ecdsa_verify.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p]
         secp256k1.secp256k1_ecdsa_verify.restype = c_int

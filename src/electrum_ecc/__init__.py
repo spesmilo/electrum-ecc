@@ -36,6 +36,7 @@ __version__ = '0.0.1'
 
 from . import ecc_fast
 from .ecc_fast import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED, LibModuleMissing
+from .ecc_fast import HASHFN_COPY_X
 from .ecc_fast import version_info
 
 def assert_bytes(x):
@@ -44,7 +45,6 @@ def assert_bytes(x):
 # Some unit tests need to create ECDSA sigs without grinding the R value (and just use RFC6979).
 # see https://github.com/bitcoin/bitcoin/pull/13666
 ENABLE_ECDSA_R_VALUE_GRINDING = True
-
 
 def string_to_number(b: bytes) -> int:
     return int.from_bytes(b, byteorder='big', signed=False)
@@ -547,10 +547,15 @@ class ECPrivkey(ECPubkey):
         sig65, recid = bruteforce_recid(sig64)
         return sig65
 
+    def ecdh(self, public_key: ECPubkey, hashfn=None) -> bytes:
+        secret = create_string_buffer(32)
+        pubkey_ptr = public_key._to_libsecp256k1_pubkey_ptr()
+        privkey_bytes = self.secret_scalar.to_bytes(32, byteorder="big")
+        _libsecp256k1.secp256k1_ecdh(_libsecp256k1.ctx, secret, pubkey_ptr, privkey_bytes, hashfn, None)
+        return bytes(secret[:32])
 
 
 def construct_ecdsa_sig65(sig64: bytes, recid: int, *, is_compressed: bool) -> bytes:
     comp = 4 if is_compressed else 0
     return bytes([27 + recid + comp]) + sig64
-
 
