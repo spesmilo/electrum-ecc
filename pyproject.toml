@@ -6,7 +6,7 @@ authors = [
 description = "Pure python ctypes wrapper for libsecp256k1"
 keywords = ["libsecp256k1", "ecc"]
 readme = "README.md"
-license = {'file'="Licence.txt"}
+license = {'file'="LICENSE.txt"}
 requires-python = ">=3.8"
 dependencies = []
 classifiers = [
