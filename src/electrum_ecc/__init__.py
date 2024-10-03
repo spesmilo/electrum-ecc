@@ -32,7 +32,7 @@ from ctypes import (
     byref, c_char_p, c_size_t, create_string_buffer, cast,
 )
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 from . import ecc_fast
 from .ecc_fast import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED, LibModuleMissing
