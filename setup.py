@@ -16,6 +16,8 @@ from wheel.bdist_wheel import safer_name, get_platform
 _logger = logging.getLogger("electrum_ecc")
 MAKE = 'gmake' if platform.system() in ['FreeBSD', 'OpenBSD'] else 'make'
 
+IS_COMPILING_LIB = not os.getenv("ELECTRUM_ECC_DONT_COMPILE")
+
 
 def absolute(*paths):
     op = os.path
@@ -80,12 +82,13 @@ def compile_secp(build_dir: str) -> None:
 class bdist_wheel(_bdist_wheel):
 
     def finalize_options(self):
-        # Inject the platform name, e.g. "linux_x86_64".
-        # This will result in the final build artifact being named e.g.
-        #   electrum_ecc-0.0.2-py3-none-linux_x86_64.whl
-        self.plat_name = get_platform(self.bdist_dir)
-        # note: we don't set the python "impl tag" or the "abi tag", as the C lib we build
-        #       does not depend on them (it is not a "C extension" as we don't static link cpython).
+        if IS_COMPILING_LIB:
+            # Inject the platform name, e.g. "linux_x86_64".
+            # This will result in the final build artifact being named e.g.
+            #   electrum_ecc-0.0.2-py3-none-linux_x86_64.whl
+            self.plat_name = get_platform(self.bdist_dir)
+            # note: we don't set the python "impl tag" or the "abi tag", as the C lib we build
+            #       does not depend on them (it is not a "C extension" as we don't static link cpython).
         _bdist_wheel.finalize_options(self)
 
     def _build_and_copy_secp_lib(self):
@@ -111,7 +114,8 @@ class bdist_wheel(_bdist_wheel):
                 shutil.copy2(srcpath, target_dir)
 
     def run(self):
-        self._build_and_copy_secp_lib()
+        if IS_COMPILING_LIB:
+            self._build_and_copy_secp_lib()
         _bdist_wheel.run(self)
 
 
