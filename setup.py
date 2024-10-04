@@ -28,11 +28,19 @@ def compile_secp(build_dir: str) -> None:
     if not os.path.exists(absolute('libsecp256k1')):
         raise Exception("missing git submodule secp256k1")
 
+    deps_msg = (
+        "For compiling libsecp256k1, besides a C compiler, "
+        "you might be missing one of: autoconf automake libtool."
+    )
+
     if not os.path.exists(absolute('libsecp256k1/configure')):
         # configure script hasn't been generated yet
         autogen = absolute('libsecp256k1/autogen.sh')
         os.chmod(absolute(autogen), 0o755)
-        subprocess.check_call([autogen], cwd=absolute('libsecp256k1'))
+        try:
+            subprocess.check_call([autogen], cwd=absolute('libsecp256k1'))
+        except subprocess.CalledProcessError as e:
+            raise Exception(f"autogen.sh failed. {deps_msg}") from e
 
     for filename in [
         'libsecp256k1/configure',
@@ -73,10 +81,13 @@ def compile_secp(build_dir: str) -> None:
     ]
 
     _logger.info('Running configure: {}'.format(' '.join(cmd)))
-    subprocess.check_call(cmd, cwd=build_dir)
+    try:
+        subprocess.check_call(cmd, cwd=build_dir)
 
-    subprocess.check_call([MAKE], cwd=build_dir)
-    subprocess.check_call([MAKE, 'install'], cwd=build_dir)
+        subprocess.check_call([MAKE], cwd=build_dir)
+        subprocess.check_call([MAKE, 'install'], cwd=build_dir)
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"error compiling libsecp. {deps_msg}") from e
 
 
 class bdist_wheel(_bdist_wheel):
