@@ -103,10 +103,9 @@ class bdist_wheel(_bdist_wheel):
 
         build_temp_libs = os.path.join(build_dir, "lib")
         for fname in os.listdir(build_temp_libs):
-            if (
-                    fname.endswith(".so") or fname.endswith(".dll") or fname.endswith(".dylib")
-                    or ".so." in fname  # FIXME symlink duplication
-            ):
+            # note: we skip the versioned .so files (e.g. "*.so.2.2.0"), as wheels don't
+            #       support symlinks and we would end up with ~3 copies of the same file
+            if fname.endswith(".so") or fname.endswith(".dll") or fname.endswith(".dylib"):
                 srcpath = os.path.join(build_temp_libs, fname)
                 _logger.info(f"copying file {srcpath!r} to {target_dir=}")
                 shutil.copy2(srcpath, target_dir)
