@@ -53,24 +53,35 @@ def load_library():
     # note: for a mapping between bitcoin-core/secp256k1 git tags and .so.V libtool version numbers,
     #       see https://github.com/bitcoin-core/secp256k1/pull/1055#issuecomment-1227505189
     tested_libversions = [2, 1, 0, ]  # try latest version first
-    libnames = []
+    libnames_local = []
+    libnames_anywhere = []
     if sys.platform == 'darwin':
         for v in tested_libversions:
-            libnames.append(f"libsecp256k1.{v}.dylib")
+            libname = f"libsecp256k1.{v}.dylib"
+            libnames_local.append(libname)
+            libnames_anywhere.append(libname)
     elif sys.platform in ('windows', 'win32'):
         for v in tested_libversions:
-            libnames.append(f"libsecp256k1-{v}.dll")
+            libname = f"libsecp256k1-{v}.dll"
+            libnames_local.append(libname)
+            libnames_anywhere.append(libname)
     elif 'ANDROID_DATA' in os.environ:
-        libnames = ['libsecp256k1.so', ]  # don't care about version number. we built w/e is available.
+        # don't care about version number. we built w/e is available.
+        libname = "libsecp256k1.so"
+        libnames_local.append(libname)
+        libnames_anywhere.append(libname)
     else:  # desktop Linux and similar
         for v in tested_libversions:
-            libnames.append(f"libsecp256k1.so.{v}")
+            libname = f"libsecp256k1.so.{v}"
+            libnames_local.append(libname)
+            libnames_anywhere.append(libname)
+        libnames_local.append("libsecp256k1.so")
         # maybe we could fall back to trying "any" version? maybe guarded with an env var?
-        #libnames.append(f"libsecp256k1.so")
+        #libnames_anywhere.append(f"libsecp256k1.so")
     library_paths = []
-    for libname in libnames:  # try local files in repo dir first
+    for libname in libnames_local:  # try local files in repo dir first (for security, but also compat)
         library_paths.append(os.path.join(os.path.dirname(__file__), libname))
-    for libname in libnames:
+    for libname in libnames_anywhere:
         library_paths.append(libname)
 
     exceptions = []

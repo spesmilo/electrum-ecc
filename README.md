@@ -6,5 +6,5 @@ Unlike Coincurve, it uses ctypes, and has no dependency.
 
 To build sdist for PyPI:
 ```
-$ python3 -m build --sdist .
+$ ./contrib/release.sh
 ```
