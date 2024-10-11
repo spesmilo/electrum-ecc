@@ -2,3 +2,10 @@
 dist/
 build/
 *.egg-info/
+**/*.pyc
+
+# shared objects
+**/*.so
+**/*.so.*
+**/*.dll
+**/*.dylib
