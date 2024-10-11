@@ -3,6 +3,7 @@ dist/
 build/
 *.egg-info/
 **/*.pyc
+.coverage
 
 # shared objects
 **/*.so
