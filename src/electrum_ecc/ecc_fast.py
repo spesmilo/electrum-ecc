@@ -11,8 +11,8 @@ import sys
 import logging
 import ctypes
 from ctypes import (
-    byref, c_byte, c_int, c_uint, c_char, c_char_p, c_size_t, c_void_p, create_string_buffer,
-    CFUNCTYPE, POINTER, cast
+    c_int, c_uint, c_char, c_size_t, c_void_p,
+    CFUNCTYPE, POINTER,
 )
 
 _logger = logging.getLogger("ecc")
@@ -36,7 +36,7 @@ SECP256K1_CONTEXT_NONE = (SECP256K1_FLAGS_TYPE_CONTEXT)
 SECP256K1_EC_COMPRESSED = (SECP256K1_FLAGS_TYPE_COMPRESSION | SECP256K1_FLAGS_BIT_COMPRESSION)
 SECP256K1_EC_UNCOMPRESSED = (SECP256K1_FLAGS_TYPE_COMPRESSION)
 
-HASHFN = CFUNCTYPE(c_int, POINTER(c_char), c_char_p, c_char_p)
+HASHFN = CFUNCTYPE(c_int, POINTER(c_char), POINTER(c_char), POINTER(c_char))
 
 def copy_x(output, x32, y32):
     ctypes.memmove(output, x32, 32)
@@ -101,54 +101,54 @@ def load_library():
         secp256k1.secp256k1_context_create.argtypes = [c_uint]
         secp256k1.secp256k1_context_create.restype = c_void_p
 
-        secp256k1.secp256k1_context_randomize.argtypes = [c_void_p, c_char_p]
+        secp256k1.secp256k1_context_randomize.argtypes = [c_void_p, POINTER(c_char)]
         secp256k1.secp256k1_context_randomize.restype = c_int
 
-        secp256k1.secp256k1_ec_pubkey_create.argtypes = [c_void_p, c_void_p, c_char_p]
+        secp256k1.secp256k1_ec_pubkey_create.argtypes = [c_void_p, c_void_p, POINTER(c_char)]
         secp256k1.secp256k1_ec_pubkey_create.restype = c_int
 
-        secp256k1.secp256k1_ecdsa_sign.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p, c_void_p, c_void_p]
+        secp256k1.secp256k1_ecdsa_sign.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char), c_void_p, c_void_p]
         secp256k1.secp256k1_ecdsa_sign.restype = c_int
 
-        secp256k1.secp256k1_ecdh.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p, HASHFN, c_void_p]
+        secp256k1.secp256k1_ecdh.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char), HASHFN, c_void_p]
         secp256k1.secp256k1_ecdh.restype = c_int
 
-        secp256k1.secp256k1_ecdsa_verify.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p]
+        secp256k1.secp256k1_ecdsa_verify.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char)]
         secp256k1.secp256k1_ecdsa_verify.restype = c_int
 
-        secp256k1.secp256k1_ec_pubkey_parse.argtypes = [c_void_p, c_char_p, c_char_p, c_size_t]
+        secp256k1.secp256k1_ec_pubkey_parse.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), c_size_t]
         secp256k1.secp256k1_ec_pubkey_parse.restype = c_int
 
-        secp256k1.secp256k1_ec_pubkey_serialize.argtypes = [c_void_p, c_char_p, c_void_p, c_char_p, c_uint]
+        secp256k1.secp256k1_ec_pubkey_serialize.argtypes = [c_void_p, POINTER(c_char), c_void_p, POINTER(c_char), c_uint]
         secp256k1.secp256k1_ec_pubkey_serialize.restype = c_int
 
-        secp256k1.secp256k1_ecdsa_signature_parse_compact.argtypes = [c_void_p, c_char_p, c_char_p]
+        secp256k1.secp256k1_ecdsa_signature_parse_compact.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
         secp256k1.secp256k1_ecdsa_signature_parse_compact.restype = c_int
 
-        secp256k1.secp256k1_ecdsa_signature_normalize.argtypes = [c_void_p, c_char_p, c_char_p]
+        secp256k1.secp256k1_ecdsa_signature_normalize.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
         secp256k1.secp256k1_ecdsa_signature_normalize.restype = c_int
 
-        secp256k1.secp256k1_ecdsa_signature_serialize_compact.argtypes = [c_void_p, c_char_p, c_char_p]
+        secp256k1.secp256k1_ecdsa_signature_serialize_compact.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
         secp256k1.secp256k1_ecdsa_signature_serialize_compact.restype = c_int
 
-        secp256k1.secp256k1_ecdsa_signature_parse_der.argtypes = [c_void_p, c_char_p, c_char_p, c_size_t]
+        secp256k1.secp256k1_ecdsa_signature_parse_der.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), c_size_t]
         secp256k1.secp256k1_ecdsa_signature_parse_der.restype = c_int
 
-        secp256k1.secp256k1_ecdsa_signature_serialize_der.argtypes = [c_void_p, c_char_p, c_void_p, c_char_p]
+        secp256k1.secp256k1_ecdsa_signature_serialize_der.argtypes = [c_void_p, POINTER(c_char), c_void_p, POINTER(c_char)]
         secp256k1.secp256k1_ecdsa_signature_serialize_der.restype = c_int
 
-        secp256k1.secp256k1_ec_pubkey_tweak_mul.argtypes = [c_void_p, c_char_p, c_char_p]
+        secp256k1.secp256k1_ec_pubkey_tweak_mul.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
         secp256k1.secp256k1_ec_pubkey_tweak_mul.restype = c_int
 
-        secp256k1.secp256k1_ec_pubkey_combine.argtypes = [c_void_p, c_char_p, c_void_p, c_size_t]
+        secp256k1.secp256k1_ec_pubkey_combine.argtypes = [c_void_p, POINTER(c_char), c_void_p, c_size_t]
         secp256k1.secp256k1_ec_pubkey_combine.restype = c_int
 
         # --enable-module-recovery
         try:
-            secp256k1.secp256k1_ecdsa_recover.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p]
+            secp256k1.secp256k1_ecdsa_recover.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char)]
             secp256k1.secp256k1_ecdsa_recover.restype = c_int
 
-            secp256k1.secp256k1_ecdsa_recoverable_signature_parse_compact.argtypes = [c_void_p, c_char_p, c_char_p, c_int]
+            secp256k1.secp256k1_ecdsa_recoverable_signature_parse_compact.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), c_int]
             secp256k1.secp256k1_ecdsa_recoverable_signature_parse_compact.restype = c_int
         except (OSError, AttributeError):
             raise LibModuleMissing('libsecp256k1 library found but it was built '
@@ -156,10 +156,10 @@ def load_library():
 
         # --enable-module-schnorrsig
         try:
-            secp256k1.secp256k1_schnorrsig_sign32.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p, c_char_p]
+            secp256k1.secp256k1_schnorrsig_sign32.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char), POINTER(c_char)]
             secp256k1.secp256k1_schnorrsig_sign32.restype = c_int
 
-            secp256k1.secp256k1_schnorrsig_verify.argtypes = [c_void_p, c_char_p, c_char_p, c_size_t, c_char_p]
+            secp256k1.secp256k1_schnorrsig_verify.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), c_size_t, POINTER(c_char)]
             secp256k1.secp256k1_schnorrsig_verify.restype = c_int
         except (OSError, AttributeError):
             _logger.warning(f"libsecp256k1 library found but it was built without desired module (--enable-module-schnorrsig)")
@@ -169,13 +169,13 @@ def load_library():
 
         # --enable-module-extrakeys
         try:
-            secp256k1.secp256k1_xonly_pubkey_parse.argtypes = [c_void_p, c_char_p, c_char_p]
+            secp256k1.secp256k1_xonly_pubkey_parse.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
             secp256k1.secp256k1_xonly_pubkey_parse.restype = c_int
 
-            secp256k1.secp256k1_xonly_pubkey_serialize.argtypes = [c_void_p, c_char_p, c_char_p]
+            secp256k1.secp256k1_xonly_pubkey_serialize.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
             secp256k1.secp256k1_xonly_pubkey_serialize.restype = c_int
 
-            secp256k1.secp256k1_keypair_create.argtypes = [c_void_p, c_char_p, c_char_p]
+            secp256k1.secp256k1_keypair_create.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
             secp256k1.secp256k1_keypair_create.restype = c_int
         except (OSError, AttributeError):
             _logger.warning(f"libsecp256k1 library found but it was built without desired module (--enable-module-extrakeys)")
