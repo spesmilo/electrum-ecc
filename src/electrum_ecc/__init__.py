@@ -461,11 +461,19 @@ class ECPrivkey(ECPubkey):
     def get_secret_bytes(self) -> bytes:
         return int.to_bytes(self.secret_scalar, length=32, byteorder='big', signed=False)
 
-    def ecdsa_sign(self, msg32: bytes, *, sigencode=None) -> bytes:
+    def ecdsa_sign(
+            self,
+            msg32: bytes,
+            *,
+            sigencode=None,
+            grind_r_value: bool = None,
+    ) -> bytes:
         if not (isinstance(msg32, bytes) and len(msg32) == 32):
             raise Exception("msg32 to be signed must be bytes, and 32 bytes exactly")
         if sigencode is None:
             sigencode = ecdsa_sig64_from_r_and_s
+        if grind_r_value is None:
+            grind_r_value = ENABLE_ECDSA_R_VALUE_GRINDING
 
         privkey_bytes = self.secret_scalar.to_bytes(32, byteorder="big")
         nonce_function = None
@@ -483,7 +491,7 @@ class ECPrivkey(ECPubkey):
             return r, s
 
         r, s = sign_with_extra_entropy(extra_entropy=None)
-        if ENABLE_ECDSA_R_VALUE_GRINDING:
+        if grind_r_value:
             counter = 0
             while r >= 2**255:  # grind for low R value https://github.com/bitcoin/bitcoin/pull/13666
                 counter += 1

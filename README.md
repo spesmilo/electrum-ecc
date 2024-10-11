@@ -9,6 +9,17 @@ This package provides a pure python interface to
 Unlike Coincurve, it uses ctypes, and has no dependency.
 
 
+### Tests
+
+```
+$ python3 -m unittest discover -s tests -t .
+```
+Or
+```
+$ pytest -v
+```
+
+
 ### Maintainer notes
 
 To build sdist for PyPI:
