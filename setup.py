@@ -7,6 +7,7 @@ import os.path
 import platform
 import shutil
 import subprocess
+import sys
 
 from setuptools import setup
 from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
@@ -16,7 +17,14 @@ from wheel.bdist_wheel import safer_name, get_platform
 _logger = logging.getLogger("electrum_ecc")
 MAKE = 'gmake' if platform.system() in ['FreeBSD', 'OpenBSD'] else 'make'
 
-IS_COMPILING_LIB = not os.getenv("ELECTRUM_ECC_DONT_COMPILE")
+ELECTRUM_ECC_DONT_COMPILE = os.getenv("ELECTRUM_ECC_DONT_COMPILE") or ""
+_logger.info(f"Checking env var: {ELECTRUM_ECC_DONT_COMPILE=!r}")
+if ELECTRUM_ECC_DONT_COMPILE == "":  # unset
+    IS_COMPILING_LIB = sys.platform != "win32"
+elif ELECTRUM_ECC_DONT_COMPILE == "1":  # user explicitly opted out
+    IS_COMPILING_LIB = False
+else:  # any other value
+    IS_COMPILING_LIB = True
 
 
 def absolute(*paths):
