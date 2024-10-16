@@ -1,7 +1,10 @@
 import unittest
 
 import electrum_ecc as ecc
+from electrum_ecc.util import sha256
 
+
+bfh = bytes.fromhex
 
 class TestBasics(unittest.TestCase):
 
@@ -31,3 +34,20 @@ class TestBasics(unittest.TestCase):
         self.assertNotEqual(A, B)
         self.assertEqual(2 * G, inf + 2 * G)
         self.assertEqual(inf, 3 * G + (-3 * G))
+
+    def test_ecdh(self):
+        def ecdh(privkey: ecc.ECPrivkey, pubkey: ecc.ECPubkey) -> bytes:
+            pt = (privkey.secret_scalar * pubkey)
+            return sha256(pt.get_public_key_bytes(compressed=True))
+
+        # Alice's perspective:
+        a = ecc.ECPrivkey.from_secret_scalar(11)
+        B = ecc.ECPubkey(bfh("022b4ea0a797a443d293ef5cff444f4979f06acfebd7e86d277475656138385b6c"))
+        dh_secret_1 = ecdh(a, B)
+        # Bob's perspective:
+        A = ecc.ECPubkey(bfh("03774ae7f858a9411e5ef4246b70c65aac5649980be5c17891bbec17895da008cb"))
+        b = ecc.ECPrivkey.from_secret_scalar(19)
+        dh_secret_2 = ecdh(b, A)
+
+        self.assertEqual(dh_secret_1, dh_secret_2)
+        self.assertEqual("739a9fccc559f41588003e0d44812950ddb9ce23d2d2077e426be4dea5d8d2b4", dh_secret_1.hex())
