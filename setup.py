@@ -25,12 +25,18 @@ def absolute(*paths):
 
 
 def compile_secp(build_dir: str) -> None:
+    _logger.info(f"Going to compile libsecp ourselves. {build_dir=}")
+
     if not os.path.exists(absolute('libsecp256k1')):
         raise Exception("missing git submodule secp256k1")
 
     deps_msg = (
         "For compiling libsecp256k1, besides a C compiler, "
         "you might be missing one of: autoconf automake libtool."
+        "\n"
+        "To opt out of compiling libsecp, set ELECTRUM_ECC_DONT_COMPILE=1 (as an environment variable). "
+        "If you opt out, you will still need to make sure libsecp256k1 is available "
+        "(either system-installed or by copying a .so/.dll/.dylib into electrum_ecc/ )"
     )
 
     if not os.path.exists(absolute('libsecp256k1/configure')):
@@ -39,7 +45,7 @@ def compile_secp(build_dir: str) -> None:
         os.chmod(absolute(autogen), 0o755)
         try:
             subprocess.check_call([autogen], cwd=absolute('libsecp256k1'))
-        except subprocess.CalledProcessError as e:
+        except (subprocess.CalledProcessError, OSError) as e:
             raise Exception(f"autogen.sh failed. {deps_msg}") from e
 
     for filename in [
@@ -86,7 +92,7 @@ def compile_secp(build_dir: str) -> None:
 
         subprocess.check_call([MAKE], cwd=build_dir)
         subprocess.check_call([MAKE, 'install'], cwd=build_dir)
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, OSError) as e:
         raise Exception(f"error compiling libsecp. {deps_msg}") from e
 
 
