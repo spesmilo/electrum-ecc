@@ -11,9 +11,15 @@ unittests_task:
         - env:
             ELECTRUM_PYTHON_VERSION: 3.8
         - env:
+            ELECTRUM_PYTHON_VERSION: 3.9
+        - env:
             ELECTRUM_PYTHON_VERSION: 3.10
         - env:
+            ELECTRUM_PYTHON_VERSION: 3.11
+        - env:
             ELECTRUM_PYTHON_VERSION: 3.12
+        - env:
+            ELECTRUM_PYTHON_VERSION: 3.13
   submodules_script:
     - git submodule init
     - git submodule update
