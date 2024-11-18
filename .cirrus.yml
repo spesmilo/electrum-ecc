@@ -32,3 +32,31 @@ unittests_task:
     - python3 -c "import electrum_ecc; print(f'{electrum_ecc.__version__=}'); print(electrum_ecc.ecc_fast.version_info())"
   script:
     - pytest --cov=electrum_ecc
+
+
+# Test if the ABI version of current "libsecp256k1" git submodule is listed in ecc_fast.KNOWN_COMPATIBLE_ABI_VERSIONS
+abi_version_task:
+  name: "check: ABI version is self-consistent"
+  container:
+    image: python:3.13
+    cpu: 1
+    memory: 1G
+  submodules_script:
+    - git submodule init
+    - git submodule update
+  requirements_script:
+    - pip install build
+  compile_libsecp_script:
+    # Compile libsecp. The wheel itself is not used.
+    - python3 -m build --wheel .
+    - ls -la build/temp_libsecp/lib
+  copy_so_script:
+    # Manually copy .so into source dir. Crucially, this .so is versioned (e.g. "*.so.2"),
+    #   and we still expect it to be picked up by our bindings.
+    - . build/temp_libsecp/lib/libsecp256k1.la
+    - cp "build/temp_libsecp/lib/$dlname" src/electrum_ecc/
+    - ls -la src/electrum_ecc/
+  script:
+    # test if importing works
+    - cd src
+    - python3 -c "import electrum_ecc; print(f'{electrum_ecc.__version__=}'); print(electrum_ecc.ecc_fast.version_info())"

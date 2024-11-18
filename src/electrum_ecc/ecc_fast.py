@@ -40,21 +40,25 @@ SECP256K1_EC_UNCOMPRESSED = (SECP256K1_FLAGS_TYPE_COMPRESSION)
 class LibModuleMissing(Exception): pass
 
 
+# note: new releases of bitcoin-core/secp256k1 sometimes bump the ABI version. When that happens,
+#       the new version should be tested and added to this list.
+# note: for a mapping between bitcoin-core/secp256k1 git tags and .so.V libtool version numbers,
+#       see https://github.com/bitcoin-core/secp256k1/pull/1055#issuecomment-1227505189
+KNOWN_COMPATIBLE_ABI_VERSIONS = [2, 1, 0, ]  # try latest version first
+
+
 def load_library():
     global HAS_SCHNORR
 
-    # note: for a mapping between bitcoin-core/secp256k1 git tags and .so.V libtool version numbers,
-    #       see https://github.com/bitcoin-core/secp256k1/pull/1055#issuecomment-1227505189
-    tested_libversions = [2, 1, 0, ]  # try latest version first
     libnames_local = []
     libnames_anywhere = []
     if sys.platform == 'darwin':
-        for v in tested_libversions:
+        for v in KNOWN_COMPATIBLE_ABI_VERSIONS:
             libname = f"libsecp256k1.{v}.dylib"
             libnames_local.append(libname)
             libnames_anywhere.append(libname)
     elif sys.platform in ('windows', 'win32'):
-        for v in tested_libversions:
+        for v in KNOWN_COMPATIBLE_ABI_VERSIONS:
             libname = f"libsecp256k1-{v}.dll"
             libnames_local.append(libname)
             libnames_anywhere.append(libname)
@@ -64,7 +68,7 @@ def load_library():
         libnames_local.append(libname)
         libnames_anywhere.append(libname)
     else:  # desktop Linux and similar
-        for v in tested_libversions:
+        for v in KNOWN_COMPATIBLE_ABI_VERSIONS:
             libname = f"libsecp256k1.so.{v}"
             libnames_local.append(libname)
             libnames_anywhere.append(libname)
