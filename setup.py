@@ -9,9 +9,28 @@ import shutil
 import subprocess
 import sys
 
+import setuptools
 from setuptools import setup
-from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
-from wheel.bdist_wheel import safer_name, get_platform
+
+try:
+    # needs new setuptools: >=70.1.0
+    from setuptools.command.bdist_wheel import bdist_wheel, safer_name, get_platform
+except ImportError as e1:
+    try:
+        # or needs old wheel: <0.44
+        from wheel.bdist_wheel import bdist_wheel, safer_name, get_platform
+    except ImportError as e2:
+        try:
+            import wheel
+            wheel_version = wheel.__version__
+        except Exception:
+            wheel_version = None
+        raise ImportError(
+            "Cannot import bdist_wheel from either setuptools or wheel. "
+            "This is likely due to having old 'setuptools' (<70.1) with new 'wheel' (>=0.44) package. "
+            "This combination is not supported. "
+            f"Found: {setuptools.__version__=}, {wheel_version=}."
+        ) from e2
 
 
 _logger = logging.getLogger("electrum_ecc")
@@ -104,7 +123,7 @@ def compile_secp(build_dir: str) -> None:
         raise Exception(f"error compiling libsecp. {deps_msg}") from e
 
 
-class bdist_wheel(_bdist_wheel):
+class Custom_bdist_wheel(bdist_wheel):
 
     def finalize_options(self):
         if IS_COMPILING_LIB:
@@ -114,7 +133,7 @@ class bdist_wheel(_bdist_wheel):
             self.plat_name = get_platform(self.bdist_dir)
             # note: we don't set the python "impl tag" or the "abi tag", as the C lib we build
             #       does not depend on them (it is not a "C extension" as we don't static link cpython).
-        _bdist_wheel.finalize_options(self)
+        bdist_wheel.finalize_options(self)
 
     def _build_and_copy_secp_lib(self):
         _build_cmd = self.get_finalized_command('build')
@@ -141,11 +160,11 @@ class bdist_wheel(_bdist_wheel):
     def run(self):
         if IS_COMPILING_LIB:
             self._build_and_copy_secp_lib()
-        _bdist_wheel.run(self)
+        bdist_wheel.run(self)
 
 
 setup(
     cmdclass={
-        'bdist_wheel': bdist_wheel,
+        'bdist_wheel': Custom_bdist_wheel,
     },
 )
