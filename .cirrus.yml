@@ -31,7 +31,7 @@ unittests_task:
     - python3 --version
     - python3 -c "import electrum_ecc; print(f'{electrum_ecc.__version__=}'); print(electrum_ecc.ecc_fast.version_info())"
   script:
-    - pytest --cov=electrum_ecc
+    - pytest tests --cov=electrum_ecc
 
 
 # Test if the ABI version of current "libsecp256k1" git submodule is listed in ecc_fast.KNOWN_COMPATIBLE_ABI_VERSIONS
