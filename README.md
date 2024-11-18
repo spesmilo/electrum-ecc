@@ -16,7 +16,7 @@ $ python3 -m unittest discover -s tests -t .
 ```
 Or
 ```
-$ pytest -v
+$ pytest tests -v
 ```
 
 
