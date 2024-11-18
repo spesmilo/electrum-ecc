@@ -23,11 +23,12 @@ unittests_task:
   submodules_script:
     - git submodule init
     - git submodule update
-  version_script:
-    - python3 --version
   install_script:
     - pip install pytest-cov
     # TODO cache building libsecp .so, which is done implicitly in the next step:
     - pip install .
+  version_script:
+    - python3 --version
+    - python3 -c "import electrum_ecc; print(f'{electrum_ecc.__version__=}'); print(electrum_ecc.ecc_fast.version_info())"
   script:
     - pytest --cov=electrum_ecc
