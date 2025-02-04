@@ -1,6 +1,13 @@
 # electrum-ecc
 
+```
+Licence: MIT Licence
+Author: The Electrum developers
+Language: Python (>= 3.8)
+```
+
 [![Latest PyPI package](https://badge.fury.io/py/electrum_ecc.svg)](https://pypi.org/project/electrum-ecc/)
+[![Build Status](https://api.cirrus-ci.com/github/spesmilo/electrum-ecc.svg)](https://cirrus-ci.com/github/spesmilo/electrum-ecc)
 
 
 This package provides a pure python interface to
