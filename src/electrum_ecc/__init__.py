@@ -350,7 +350,14 @@ class ECPubkey(object):
     ) -> bool:
         assert_bytes(sig64)
         if len(sig64) != 64:
-            return False
+            # This can happen if r or s are encoded as signed integers
+            try:
+                # If sig64 is actually a DER signature, try to get r and s values
+                r, s = get_r_and_s_from_ecdsa_der_sig(sig64)
+                # Convert r and s to a proper compact signature format
+                sig64 = ecdsa_sig64_from_r_and_s(r, s)
+            except Exception:
+                return False
         if not (isinstance(msg32, bytes) and len(msg32) == 32):
             return False
 
