@@ -27,7 +27,7 @@ import base64
 import hashlib
 import functools
 import secrets
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, Callable
 from ctypes import (
     byref, c_char_p, c_size_t, create_string_buffer, cast,
 )
@@ -37,6 +37,8 @@ __version__ = '0.0.4'
 from . import ecc_fast
 from .ecc_fast import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED, LibModuleMissing
 from .ecc_fast import version_info
+from .ecdsa_sigformat import *
+
 
 def assert_bytes(x):
     assert isinstance(x, (bytes, bytearray))
@@ -47,77 +49,6 @@ ENABLE_ECDSA_R_VALUE_GRINDING = True
 
 def string_to_number(b: bytes) -> int:
     return int.from_bytes(b, byteorder='big', signed=False)
-
-
-def ecdsa_sig64_from_der_sig(der_sig: bytes) -> bytes:
-    r, s = get_r_and_s_from_ecdsa_der_sig(der_sig)
-    return ecdsa_sig64_from_r_and_s(r, s)
-
-
-def ecdsa_der_sig_from_ecdsa_sig64(sig64: bytes) -> bytes:
-    r, s = get_r_and_s_from_ecdsa_sig64(sig64)
-    return ecdsa_der_sig_from_r_and_s(r, s)
-
-
-def ecdsa_der_sig_from_r_and_s(r: int, s: int) -> bytes:
-    sig64 = (
-        int.to_bytes(r, length=32, byteorder="big") +
-        int.to_bytes(s, length=32, byteorder="big"))
-    sig = create_string_buffer(64)
-    ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_compact(_libsecp256k1.ctx, sig, sig64)
-    if 1 != ret:
-        raise Exception("Bad signature")
-    ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
-    der_sig = create_string_buffer(80)  # this much space should be enough
-    der_sig_size = c_size_t(len(der_sig))
-    ret = _libsecp256k1.secp256k1_ecdsa_signature_serialize_der(_libsecp256k1.ctx, der_sig, byref(der_sig_size), sig)
-    if 1 != ret:
-        raise Exception("failed to serialize DER sig")
-    der_sig_size = der_sig_size.value
-    return bytes(der_sig)[:der_sig_size]
-
-
-def get_r_and_s_from_ecdsa_der_sig(der_sig: bytes) -> Tuple[int, int]:
-    assert isinstance(der_sig, bytes)
-    sig = create_string_buffer(64)
-    ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_der(_libsecp256k1.ctx, sig, der_sig, len(der_sig))
-    if 1 != ret:
-        raise Exception("Bad signature")
-    ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
-    compact_signature = create_string_buffer(64)
-    _libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(_libsecp256k1.ctx, compact_signature, sig)
-    r = int.from_bytes(compact_signature[:32], byteorder="big")
-    s = int.from_bytes(compact_signature[32:], byteorder="big")
-    return r, s
-
-
-def get_r_and_s_from_ecdsa_sig64(sig64: bytes) -> Tuple[int, int]:
-    if not (isinstance(sig64, bytes) and len(sig64) == 64):
-        raise Exception("sig64 must be bytes, and 64 bytes exactly")
-    sig = create_string_buffer(64)
-    ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_compact(_libsecp256k1.ctx, sig, sig64)
-    if 1 != ret:
-        raise Exception("Bad signature")
-    ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
-    compact_signature = create_string_buffer(64)
-    _libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(_libsecp256k1.ctx, compact_signature, sig)
-    r = int.from_bytes(compact_signature[:32], byteorder="big")
-    s = int.from_bytes(compact_signature[32:], byteorder="big")
-    return r, s
-
-
-def ecdsa_sig64_from_r_and_s(r: int, s: int) -> bytes:
-    sig64 = (
-        int.to_bytes(r, length=32, byteorder="big") +
-        int.to_bytes(s, length=32, byteorder="big"))
-    sig = create_string_buffer(64)
-    ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_compact(_libsecp256k1.ctx, sig, sig64)
-    if 1 != ret:
-        raise Exception("Bad signature")
-    ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
-    compact_signature = create_string_buffer(64)
-    _libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(_libsecp256k1.ctx, compact_signature, sig)
-    return bytes(compact_signature)
 
 
 def _x_and_y_from_pubkey_bytes(pubkey: bytes) -> Tuple[int, int]:
@@ -348,6 +279,9 @@ class ECPubkey(object):
         *,
         enforce_low_s: bool = True,  # policy/standardness rule
     ) -> bool:
+        """Returns whether sig64 is a valid ECDSA signature for msg32 and this public key.
+        The signature must be in "sig64" format (see ecdsa_sigformat.py).
+        """
         assert_bytes(sig64)
         if len(sig64) != 64:
             return False
@@ -464,9 +398,15 @@ class ECPrivkey(ECPubkey):
             self,
             msg32: bytes,
             *,
-            sigencode=None,
+            sigencode: Optional[Callable[[int, int], bytes]] = None,
             grind_r_value: bool = None,
     ) -> bytes:
+        """Creates an ECDSA signature for the given message (hash).
+        The returned signature is by default a sig64 (compact 64-byte format), but can be customized
+        by setting `sigencode`.
+
+        note: msg32 is supposed to be a 32 byte hash of the message to be signed.
+        """
         if not (isinstance(msg32, bytes) and len(msg32) == 32):
             raise Exception("msg32 to be signed must be bytes, and 32 bytes exactly")
         if sigencode is None:
