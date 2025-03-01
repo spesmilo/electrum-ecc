@@ -23,8 +23,6 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import base64
-import hashlib
 import functools
 import secrets
 from typing import Union, Tuple, Optional, Callable
@@ -34,8 +32,7 @@ from ctypes import (
 
 from . import ecc_fast
 from .ecc_fast import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED, LibModuleMissing
-from .ecc_fast import version_info
-from .ecdsa_sigformat import *
+from .ecdsa_sigformat import ecdsa_sig64_from_r_and_s
 
 
 def assert_bytes(x):
