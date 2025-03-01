@@ -32,8 +32,6 @@ from ctypes import (
     byref, c_char_p, c_size_t, create_string_buffer, cast,
 )
 
-__version__ = '0.0.4'
-
 from . import ecc_fast
 from .ecc_fast import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED, LibModuleMissing
 from .ecc_fast import version_info
@@ -43,9 +41,6 @@ from .ecdsa_sigformat import *
 def assert_bytes(x):
     assert isinstance(x, (bytes, bytearray))
 
-# Some unit tests need to create ECDSA sigs without grinding the R value (and just use RFC6979).
-# see https://github.com/bitcoin/bitcoin/pull/13666
-ENABLE_ECDSA_R_VALUE_GRINDING = True
 
 def string_to_number(b: bytes) -> int:
     return int.from_bytes(b, byteorder='big', signed=False)
@@ -412,6 +407,7 @@ class ECPrivkey(ECPubkey):
         if sigencode is None:
             sigencode = ecdsa_sig64_from_r_and_s
         if grind_r_value is None:
+            from . import ENABLE_ECDSA_R_VALUE_GRINDING
             grind_r_value = ENABLE_ECDSA_R_VALUE_GRINDING
 
         privkey_bytes = self.secret_scalar.to_bytes(32, byteorder="big")
