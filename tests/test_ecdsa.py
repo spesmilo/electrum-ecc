@@ -50,3 +50,16 @@ class TestEcdsa(unittest.TestCase):
             sigencode=ecc.ecdsa_der_sig_from_r_and_s, grind_r_value=False,
         )
         self.assertEqual('3045022100902a288b98392254cd23c0e9a49ac6d7920f171b8249a48e484b998f1874a2010220723d844826828f092cf400cb210c4fa0b8cd1b9d1a7f21590e78e022ff6476b9', sig1.hex())
+
+    def test_ecdsa_verify_der_sig(self):
+        eckey1 = ecc.ECPrivkey.from_secret_scalar(10877953613094898331777953037035807584681004899710037363338258839373864549145)
+        msg32 = bytes(32)
+        der_sig = bfh('3045022100cfd454a1215fdea463201a7a32c146c1cec54b60b12d47e118a2add41366cec602203e7875d23cc80f958e45298bb8369d4422acfbc1c317353eebe02c89206b3e73')
+        # der sig must be converted for ecdsa_verify:
+        sig64 = ecc.ecdsa_sig64_from_der_sig(der_sig)
+        self.assertTrue(eckey1.ecdsa_verify(sig64, msg32))
+        # so this won't work:
+        self.assertFalse(eckey1.ecdsa_verify(der_sig, msg32))
+
+        fake_msg = sha256(b"satoshi")
+        self.assertFalse(eckey1.ecdsa_verify(sig64, fake_msg))
