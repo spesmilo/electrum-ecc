@@ -3,7 +3,7 @@
 ```
 Licence: MIT Licence
 Author: The Electrum developers
-Language: Python (>= 3.8)
+Language: Python (>= 3.10)
 ```
 
 [![Latest PyPI package](https://badge.fury.io/py/electrum_ecc.svg)](https://pypi.org/project/electrum-ecc/)
