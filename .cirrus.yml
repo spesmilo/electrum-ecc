@@ -20,6 +20,7 @@ unittests_task:
     - git submodule init
     - git submodule update
   install_script:
+    - pip freeze --all  # to log pip/setuptools/wheel/etc versions
     - pip install pytest-cov
     # TODO cache building libsecp .so, which is done implicitly in the next step:
     - pip install .
