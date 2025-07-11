@@ -2,7 +2,8 @@
 requires = ["setuptools >= 61.0.0"]
 # ^ note: we also require wheel, but apparently that does not have to be specified.
 #         see https://github.com/python/importlib_metadata/commit/aae281a9ff6c9a1fa9daad82c79457e8770a1c7e
-build-backend = "setuptools.build_meta"
+build-backend = "backend"
+backend-path = ["_custom_build"]
 
 [project]
 name = "electrum-ecc"

@@ -3,6 +3,8 @@
 #       - but won't be added to the wheel (unless by other means)
 
 graft libsecp256k1/
+graft _custom_build/
 prune libsecp256k1/ci/
 prune libsecp256k1/.github/
+global-exclude *.pyc
 global-exclude .*

@@ -36,7 +36,15 @@ except ImportError as e1:
 _logger = logging.getLogger("electrum_ecc")
 MAKE = 'gmake' if platform.system() in ['FreeBSD', 'OpenBSD'] else 'make'
 
-ELECTRUM_ECC_DONT_COMPILE = os.getenv("ELECTRUM_ECC_DONT_COMPILE") or ""
+ELECTRUM_ECC_DONT_COMPILE = None
+for arg in sys.argv[:]:
+    if arg.startswith("--electrum_ecc.dont_compile="):
+        value = arg.split("=", 1)[1]
+        sys.argv.remove(arg)
+        ELECTRUM_ECC_DONT_COMPILE = value
+        break
+if ELECTRUM_ECC_DONT_COMPILE is None:
+    ELECTRUM_ECC_DONT_COMPILE = os.getenv("ELECTRUM_ECC_DONT_COMPILE") or ""
 _logger.info(f"Checking env var: {ELECTRUM_ECC_DONT_COMPILE=!r}")
 if ELECTRUM_ECC_DONT_COMPILE == "":  # unset
     IS_COMPILING_LIB = sys.platform != "win32"
