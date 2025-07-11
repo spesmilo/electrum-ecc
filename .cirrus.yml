@@ -29,6 +29,7 @@ unittests_task:
     - pip install .
   version_script:
     - python3 --version
+    - pip freeze --all
     - python3 -c "import electrum_ecc; print(f'{electrum_ecc.__version__=}'); print(electrum_ecc.ecc_fast.version_info())"
   script:
     - pytest tests --cov=electrum_ecc
