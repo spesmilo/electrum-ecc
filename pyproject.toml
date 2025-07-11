@@ -12,13 +12,13 @@ authors = [
 description = "Pure python ctypes wrapper for libsecp256k1"
 keywords = ["libsecp256k1", "ecc"]
 readme = "README.md"
-license = {'file'="LICENSE.txt"}
+license = "MIT"
+license-files = ["LICENSE.txt"]
 requires-python = ">=3.10"
 dependencies = []
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
