@@ -44,7 +44,7 @@ class LibModuleMissing(Exception): pass
 #       the new version should be tested and added to this list.
 # note: for a mapping between bitcoin-core/secp256k1 git tags and .so.V libtool version numbers,
 #       see https://github.com/bitcoin-core/secp256k1/pull/1055#issuecomment-1227505189
-KNOWN_COMPATIBLE_ABI_VERSIONS = [5, 2, 1, 0, ]  # try latest version first
+KNOWN_COMPATIBLE_ABI_VERSIONS = [6, 5, 2, 1, 0, ]  # try latest version first
 
 
 def load_library():
