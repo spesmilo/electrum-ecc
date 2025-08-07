@@ -4,7 +4,7 @@ from .util import *
 from .ecc_fast import _libsecp256k1
 
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 
 # Some unit tests need to create ECDSA sigs without grinding the R value (and just use RFC6979).
