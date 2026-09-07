@@ -156,6 +156,9 @@ def load_library():
             secp256k1.secp256k1_schnorrsig_sign32.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char), POINTER(c_char)]
             secp256k1.secp256k1_schnorrsig_sign32.restype = c_int
 
+            secp256k1.secp256k1_schnorrsig_sign_custom.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), c_size_t, POINTER(c_char), c_void_p]
+            secp256k1.secp256k1_schnorrsig_sign_custom.restype = c_int
+
             secp256k1.secp256k1_schnorrsig_verify.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), c_size_t, POINTER(c_char)]
             secp256k1.secp256k1_schnorrsig_verify.restype = c_int
         except (OSError, AttributeError):

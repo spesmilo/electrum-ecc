@@ -27,12 +27,25 @@ import functools
 import secrets
 from typing import Union, Tuple, Optional, Callable
 from ctypes import (
-    byref, c_char_p, c_size_t, create_string_buffer, cast,
+    byref, c_char_p, c_size_t, create_string_buffer, cast, Structure, c_ubyte, c_void_p,
 )
 
 from . import ecc_fast
 from .ecc_fast import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED, LibModuleMissing
 from .ecdsa_sigformat import ecdsa_sig64_from_r_and_s
+
+
+class _SchnorrsigExtraparams(Structure):
+    """secp256k1_schnorrsig_extraparams: a NULL noncefp selects the BIP-340
+    nonce function, and ndata is then its 32 bytes of auxiliary randomness."""
+    _fields_ = [
+        ("magic", c_ubyte * 4),
+        ("noncefp", c_void_p),
+        ("ndata", c_void_p),
+    ]
+
+
+_SCHNORRSIG_EXTRAPARAMS_MAGIC = (c_ubyte * 4)(0xDA, 0x6F, 0xB3, 0x8C)
 
 
 def assert_bytes(x):
@@ -292,18 +305,20 @@ class ECPubkey(object):
             return False
         return True
 
-    def schnorr_verify(self, sig64: bytes, msg32: bytes) -> bool:
-        assert isinstance(sig64, bytes), type(sig64)
-        assert len(sig64) == 64, len(sig64)
-        assert isinstance(msg32, bytes), type(msg32)
-        assert len(msg32) == 32, len(msg32)
+    def schnorr_verify(self, sig64: bytes, msg: bytes) -> bool:
+        """Verifies a BIP-340 schnorr signature over msg, a message of any length."""
+        if not isinstance(sig64, bytes):
+            raise TypeError(f"sig64 must be bytes, not {type(sig64).__name__}")
+        if len(sig64) != 64:
+            raise ValueError(f"sig64 must be 64 bytes, not {len(sig64)}")
+        if not isinstance(msg, bytes):
+            raise TypeError(f"msg must be bytes, not {type(msg).__name__}")
         if not ecc_fast.HAS_SCHNORR:
             raise LibModuleMissing(
                 'libsecp256k1 library found but it was built '
                 'without required modules (--enable-module-schnorrsig --enable-module-extrakeys)')
-        msglen = 32
         pubkey = self._to_libsecp256k1_xonly_pubkey_ptr()
-        if 1 != _libsecp256k1.secp256k1_schnorrsig_verify(_libsecp256k1.ctx, sig64, msg32, msglen, pubkey):
+        if 1 != _libsecp256k1.secp256k1_schnorrsig_verify(_libsecp256k1.ctx, sig64, msg, len(msg), pubkey):
             return False
         return True
 
@@ -437,19 +452,21 @@ class ECPrivkey(ECPubkey):
         sig = sigencode(r, s)
         return sig
 
-    def schnorr_sign(self, msg32: bytes, *, aux_rand32: bytes = None) -> bytes:
-        """Creates a BIP-340 schnorr signature for the given message (hash)
-        and using the optional auxiliary random data.
+    def schnorr_sign(self, msg: bytes, *, aux_rand32: bytes = None) -> bytes:
+        """Creates a BIP-340 schnorr signature for msg, a message of any length,
+        using the optional auxiliary random data.
 
-        note: msg32 is supposed to be a 32 byte hash of the message to be signed.
-              The BIP recommends using bip340_tagged_hash for hashing the message.
+        note: the BIP recommends signing a 32 byte tagged hash of the message,
+              see bip340_tagged_hash.
         """
-        assert isinstance(msg32, bytes), type(msg32)
-        assert len(msg32) == 32, len(msg32)
+        if not isinstance(msg, bytes):
+            raise TypeError(f"msg must be bytes, not {type(msg).__name__}")
         if aux_rand32 is None:
             aux_rand32 = bytes(32)
-        assert isinstance(aux_rand32, bytes), type(aux_rand32)
-        assert len(aux_rand32) == 32, len(aux_rand32)
+        if not isinstance(aux_rand32, bytes):
+            raise TypeError(f"aux_rand32 must be bytes, not {type(aux_rand32).__name__}")
+        if len(aux_rand32) != 32:
+            raise ValueError(f"aux_rand32 must be 32 bytes, not {len(aux_rand32)}")
         if not ecc_fast.HAS_SCHNORR:
             raise LibModuleMissing(
                 'libsecp256k1 library found but it was built '
@@ -462,12 +479,15 @@ class ECPrivkey(ECPubkey):
             raise Exception('secret key was invalid')
         # sign msg and verify sig
         sig64 = create_string_buffer(64)
-        ret = _libsecp256k1.secp256k1_schnorrsig_sign32(
-            _libsecp256k1.ctx, sig64, msg32, keypair, aux_rand32)
+        aux_buf = create_string_buffer(aux_rand32, 32)
+        extraparams = _SchnorrsigExtraparams(
+            _SCHNORRSIG_EXTRAPARAMS_MAGIC, None, cast(aux_buf, c_void_p))
+        ret = _libsecp256k1.secp256k1_schnorrsig_sign_custom(
+            _libsecp256k1.ctx, sig64, msg, len(msg), keypair, byref(extraparams))
         sig64 = bytes(sig64)
         if 1 != ret:
             raise Exception('signing failure')
-        if not self.schnorr_verify(sig64, msg32):
+        if not self.schnorr_verify(sig64, msg):
             raise Exception("sanity check failed: signature we just created does not verify!")
         return sig64
 
