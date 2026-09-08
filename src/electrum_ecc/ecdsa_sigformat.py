@@ -8,6 +8,8 @@
 #              This is a variable length (around 71-73 bytes) serialized format.
 # - "r and s": A tuple of integers (r, s).
 # This module contains helper functions to convert between these.
+# These conversions canonicalize the signature to low-S, so a high-S
+# signature does not round-trip byte-for-byte.
 
 from typing import Tuple
 from ctypes import (
