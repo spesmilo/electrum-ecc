@@ -40,3 +40,6 @@ Repository = "https://github.com/spesmilo/electrum-ecc"
 
 [tool.setuptools.dynamic]
 version = { attr = 'electrum_ecc.__version__' }
+
+[tool.setuptools.package-data]
+electrum_ecc = ["py.typed"]
