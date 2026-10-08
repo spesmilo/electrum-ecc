@@ -49,6 +49,9 @@ KNOWN_COMPATIBLE_ABI_VERSIONS = [7, 6, 5, 2, 1, 0, ]  # try latest version first
 
 def load_library():
     global HAS_SCHNORR
+    global HAS_MUSIG
+
+    HAS_MUSIG = False
 
     libnames_local = []
     libnames_anywhere = []
@@ -180,6 +183,54 @@ def load_library():
             # raise LibModuleMissing('libsecp256k1 library found but it was built '
             #                        'without required module (--enable-module-extrakeys)')
 
+        # --enable-module-musig
+        try:
+            char_ptr = POINTER(c_char)
+            char_ptr_ptr = POINTER(char_ptr)
+            secp256k1.secp256k1_musig_pubnonce_parse.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_pubnonce_parse.restype = c_int
+            secp256k1.secp256k1_musig_pubnonce_serialize.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_pubnonce_serialize.restype = c_int
+            secp256k1.secp256k1_musig_aggnonce_parse.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_aggnonce_parse.restype = c_int
+            secp256k1.secp256k1_musig_aggnonce_serialize.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_aggnonce_serialize.restype = c_int
+            secp256k1.secp256k1_musig_partial_sig_parse.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_partial_sig_parse.restype = c_int
+            secp256k1.secp256k1_musig_partial_sig_serialize.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_partial_sig_serialize.restype = c_int
+
+            secp256k1.secp256k1_musig_pubkey_agg.argtypes = [c_void_p, char_ptr, char_ptr, char_ptr_ptr, c_size_t]
+            secp256k1.secp256k1_musig_pubkey_agg.restype = c_int
+            secp256k1.secp256k1_musig_pubkey_ec_tweak_add.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_pubkey_ec_tweak_add.restype = c_int
+            secp256k1.secp256k1_musig_pubkey_xonly_tweak_add.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_pubkey_xonly_tweak_add.restype = c_int
+
+            secp256k1.secp256k1_musig_nonce_gen.argtypes = [
+                c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char),
+                POINTER(c_char), POINTER(c_char), POINTER(c_char),
+                POINTER(c_char), POINTER(c_char),
+            ]
+            secp256k1.secp256k1_musig_nonce_gen.restype = c_int
+            secp256k1.secp256k1_musig_nonce_agg.argtypes = [c_void_p, char_ptr, char_ptr_ptr, c_size_t]
+            secp256k1.secp256k1_musig_nonce_agg.restype = c_int
+            secp256k1.secp256k1_musig_nonce_process.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_nonce_process.restype = c_int
+            secp256k1.secp256k1_musig_partial_sign.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char), POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_partial_sign.restype = c_int
+            secp256k1.secp256k1_musig_partial_sig_verify.argtypes = [c_void_p, POINTER(c_char), POINTER(c_char), POINTER(c_char), POINTER(c_char), POINTER(c_char)]
+            secp256k1.secp256k1_musig_partial_sig_verify.restype = c_int
+            secp256k1.secp256k1_musig_partial_sig_agg.argtypes = [c_void_p, char_ptr, char_ptr, char_ptr_ptr, c_size_t]
+            secp256k1.secp256k1_musig_partial_sig_agg.restype = c_int
+        except (OSError, AttributeError):
+            _logger.warning(
+                'libsecp256k1 library found but it was built without desired module '
+                '(--enable-module-musig)'
+            )
+        else:
+            HAS_MUSIG = True
+
         secp256k1.ctx = secp256k1.secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY)
         ret = secp256k1.secp256k1_context_randomize(secp256k1.ctx, os.urandom(32))
         if not ret:
@@ -194,6 +245,7 @@ def load_library():
 
 _libsecp256k1 = None
 HAS_SCHNORR = True
+HAS_MUSIG = False
 try:
     _libsecp256k1 = load_library()
 except BaseException as e:

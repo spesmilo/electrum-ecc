@@ -46,6 +46,7 @@ jobs:
           python3 --version
           pip freeze --all
           python3 -c "import electrum_ecc; print(f'{electrum_ecc.__version__=}'); print(electrum_ecc.ecc_fast.version_info())"
+          python3 -c "from electrum_ecc.ecc_fast import HAS_MUSIG; assert HAS_MUSIG"
 
       - name: Run pytest
         run: pytest tests --cov=electrum_ecc
@@ -82,3 +83,29 @@ jobs:
       - name: import test from src/
         working-directory: src
         run: python3 -c "import electrum_ecc; print(f'{electrum_ecc.__version__=}'); print(electrum_ecc.ecc_fast.version_info())"
+
+  system-lib-without-musig:
+    name: "unittests: system libsecp256k1 without MuSig"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install system libsecp256k1 and package
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends libsecp256k1-1
+          pip install pytest
+          ELECTRUM_ECC_DONT_COMPILE=1 pip install .
+
+      - name: Verify fallback and run pytest
+        run: |
+          python3 -c "from electrum_ecc.ecc_fast import HAS_MUSIG; assert not HAS_MUSIG"
+          pytest tests

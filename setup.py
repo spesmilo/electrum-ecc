@@ -113,6 +113,7 @@ def compile_secp(build_dir: str) -> None:
         '--enable-module-recovery',
         '--enable-module-extrakeys',
         '--enable-module-schnorrsig',
+        '--enable-module-musig',
         '--enable-experimental',
         '--enable-module-ecdh',
         '--enable-benchmark=no',
